@@ -218,9 +218,9 @@ define('AMPFORWP_COMMENTS_PER_PAGE',  ampforwp_define_comments_number() );
 	     // HIDE/SHOW TAG AND CATEGORY #4326
 	  if(is_tag() || is_category() || is_tax()){
 		$amp_queried_object = get_queried_object();
-		if (property_exists($amp_queried_object, 'term_id'))
+		if (is_object($amp_queried_object) && property_exists($amp_queried_object, 'term_id'))
 		{
-			$term_id = get_queried_object()->term_id;
+			$term_id = $amp_queried_object->term_id;
 			$tax_status = ampforwp_get_taxonomy_meta($term_id,'status');
 			if($tax_status==false){
 				 return;
@@ -2648,13 +2648,13 @@ function ampforwp_talking_to_robots() {
   	$noindex       = 'index';
 	$nofollow      = 'follow';
   	$aios_class = new All_in_One_SEO_Pack();
-  	if (property_exists($aios_class,'get_page_number')) {
+  	if (is_object($aios_class) && property_exists($aios_class,'get_page_number')) {
   		$page       = $aios_class->get_page_number();
 	}
-	if (property_exists($aios_class,'get_current_options')) {
+	if (is_object($aios_class) && property_exists($aios_class,'get_current_options')) {
 		$opts = $aios_class->get_current_options( array(), 'aiosp' );
 	}
-	if (property_exists($aios_class,'get_robots_meta')) {
+	if (is_object($aios_class) && property_exists($aios_class,'get_robots_meta')) {
   		$aios_meta = $aios_class->get_robots_meta();
  	} 
   	if ( ( is_category() && ! empty( $aioseop_options['aiosp_category_noindex'] ) ) || ( ! is_category() && is_archive() && ! is_tag() && ! is_tax() || ( is_tag() && ! empty( $aioseop_options['aiosp_tags_noindex'] ) ) || ( is_search() && ! empty( $aioseop_options['aiosp_search_noindex'] ) )
@@ -2681,7 +2681,7 @@ function ampforwp_talking_to_robots() {
 				}
 			}
 		}
-		if ( is_singular() && property_exists($aios_class,'is_password_protected') && $aios_class->is_password_protected() && apply_filters( 'aiosp_noindex_password_posts', false ) ) {
+		if ( is_singular() && is_object($aios_class) && property_exists($aios_class,'is_password_protected') && $aios_class->is_password_protected() && apply_filters( 'aiosp_noindex_password_posts', false ) ) {
 			$noindex = 'noindex';
 		}
 
@@ -3615,7 +3615,6 @@ function ampforwp_gist_shortcode_generator($atts) {
   		height="'. esc_attr($height) .'">
   		</amp-gist>';
    }
-  
 }
 
 // Code updated and added the JS proper way #336
