@@ -143,7 +143,9 @@ add_amp_theme_support('AMP-menu');
  	require AMPFORWP_PLUGIN_DIR . '/classes/class-ampforwp-youtube-embed.php' ;
  	// Custom Post Types
  	require AMPFORWP_PLUGIN_DIR  .'templates/ampforwp-custom-post-type.php';
- 	
+	 if ((true == ampforwp_get_setting('ampforwp-infinite-scroll-single')) && (true == ampforwp_get_setting('ampforwp-infinite-scroll') || true == ampforwp_get_setting('ampforwp-wcp-infinite-scroll') ) ) {
+ 		require AMPFORWP_PLUGIN_DIR  .'templates/ampforwp-infinite-scroll-select-post-meta.php';
+	 }
  	// TODO: Update this function 
  	function ampforwp_include_customizer_files(){
  		global $redux_builder_amp;
@@ -1003,7 +1005,7 @@ function ampforwp_title_meta_save( $post_id ) {
     if ( $is_autosave || $is_revision || !$is_valid_nonce || !$is_valid_nonce_ia) {
         return;
     }
-
+	
     // Checks for radio buttons and saves if needed
     if( isset( $_POST[ 'ampforwp-amp-on-off' ] ) ) {
         $ampforwp_amp_status = sanitize_text_field( $_POST[ 'ampforwp-amp-on-off' ] );
@@ -1017,7 +1019,10 @@ function ampforwp_title_meta_save( $post_id ) {
         $ampforwp_redirection_status = sanitize_text_field( $_POST[ 'ampforwp-redirection-on-off' ] );
         update_post_meta( $post_id, 'ampforwp-redirection-on-off', $ampforwp_redirection_status );
     }
-
+	if( isset( $_POST[ 'ampforwp_filtered_post_ids' ] ) ) {
+		$recent_posts = $_POST[ 'ampforwp_filtered_post_ids' ];
+		update_post_meta( $post_id, 'ampforwp_filtered_post_ids', $recent_posts );
+	}
 }
 add_action( 'save_post', 'ampforwp_title_meta_save' );
 
@@ -2334,7 +2339,7 @@ function ampforwp_facebook_comments_markup() {
 
 		$facebook_comments_markup = '<section class="amp-wp-content post-comments amp-wp-article-content amp-facebook-comments" id="comments">';
 		if(true == ampforwp_get_setting('ampforwp-facebook-comments-title')){
-			$facebook_comments_markup .= '<h5>'. esc_html__(ampforwp_translation(ampforwp_get_setting('ampforwp-facebook-comments-title'), 'Leave a Comment'),'accelerated-mobile-pages') .'</h5>';
+			$facebook_comments_markup .= '<h5>'. esc_html(ampforwp_translation(ampforwp_get_setting('ampforwp-facebook-comments-title'), 'Leave a Comment')) .'</h5>';
 		}
 		$facebook_comments_markup .= '<amp-facebook-comments width=486 height=357
 	    	layout="responsive" '.'data-locale = "'.esc_attr($lang).'"'.' data-numposts=';
@@ -3477,7 +3482,8 @@ function ampforwp_add_modified_date($post_object){
 					$date = $post_object->get( 'post_modified_timestamp' );
 					echo esc_html(
 						sprintf(
-							_x( ampforwp_translation( $date_notice_text ,'This article was last modified on ' ) . ' %s '  , '%s = human-readable time difference', 'accelerated-mobile-pages' ),
+							/* translators: %s: date */
+							 ampforwp_translation( $date_notice_text ,'This article was last modified on ' ) . ' %s '  , '%s = human-readable time difference',
 							date_i18n( get_option( 'date_format' ) , $date )
 						)
 					);
@@ -3489,7 +3495,8 @@ function ampforwp_add_modified_date($post_object){
 					$date = $post_object->get( 'post_publish_timestamp' );
 					echo esc_html(
 						sprintf(
-							_x( ampforwp_translation( $date_notice_text ,'This article was last modified on ' ) . ' %s '  , '%s = human-readable time difference', 'accelerated-mobile-pages' ),
+							/* translators: %s: date */
+							 ampforwp_translation( $date_notice_text ,'This article was last modified on ' ) . ' %s '  , '%s = human-readable time difference',
 							date_i18n( get_option( 'date_format' ) , $date )
 						)
 					);
@@ -4038,7 +4045,7 @@ function ampforwp_view_nonamp(){
    	if(strpos($permalink, '/%year%/%monthnum%/%day%/%postname%/') !== false){
     	$non_amp_url = get_permalink(ampforwp_get_the_ID());
 	}
-	if ( $non_amp_url ) { ?><a class="view-non-amp" href="<?php echo esc_url(apply_filters('ampforwp_view_nonamp_url', $non_amp_url) ) ?>" <?php echo esc_attr($nofollow); ?> title="<?php echo ampforwp_get_setting('amp-translator-non-amp-page-text') ?>"><?php if(function_exists('pll__')){echo pll__(esc_html__( ampforwp_get_setting('amp-translator-non-amp-page-text'), 'accelerated-mobile-pages'));}else{echo esc_html__( ampforwp_get_setting('amp-translator-non-amp-page-text'), 'accelerated-mobile-pages');}?></a> <?php }
+	if ( $non_amp_url ) { ?><a class="view-non-amp" href="<?php echo esc_url(apply_filters('ampforwp_view_nonamp_url', $non_amp_url) ) ?>" <?php echo esc_attr($nofollow); ?> title="<?php echo ampforwp_get_setting('amp-translator-non-amp-page-text') ?>"><?php if(function_exists('pll__')){echo pll__(esc_html( ampforwp_get_setting('amp-translator-non-amp-page-text')));}else{echo esc_html( ampforwp_get_setting('amp-translator-non-amp-page-text'));}?></a> <?php }
 }
 
  //68. Facebook Instant Articles
@@ -7873,15 +7880,15 @@ if ( ! function_exists('ampforwp_search_form') ) {
 		if ( ampforwp_is_amp_endpoint() ) {
 		$placeholder = ampforwp_translation(ampforwp_get_setting('ampforwp-search-placeholder'), 'Type Here' );
 		if (function_exists('pll__')) {
-			$placeholder = pll__(esc_html__( ampforwp_get_setting('ampforwp-search-placeholder'), 'accelerated-mobile-pages'));
+			$placeholder = pll__(esc_html( ampforwp_get_setting('ampforwp-search-placeholder')));
 		}
 		$widgetlabel = ampforwp_translation(ampforwp_get_setting('ampforwp-search-widget-label'), 'Search for:' );	
 			$form = '<form role="search" method="get" id="searchform" class="search-form" action="' . esc_url( home_url( '/' ) ) . '" target="_top">
 					<label>
-						<span class="screen-reader-text">' . esc_html__( $widgetlabel, 'accelerated-mobile-pages' ) . '</span>
-						<input type="text" value="" placeholder="' . esc_html__( $placeholder, 'accelerated-mobile-pages' ) . '" name="s" class="search-field">
+						<span class="screen-reader-text">' . esc_html( $widgetlabel) . '</span>
+						<input type="text" value="" placeholder="' . esc_html( $placeholder) . '" name="s" class="search-field">
 					</label>
-					<input type="text" placeholder="' . esc_html__( $placeholder, 'accelerated-mobile-pages' ) . '" value="1" name="amp" class="hide" id="ampforwp_search_query_item">
+					<input type="text" placeholder="' . esc_html( $placeholder ) . '" value="1" name="amp" class="hide" id="ampforwp_search_query_item">
 				</form>';
 		}
 		return $form;
@@ -8152,7 +8159,7 @@ function ampforwp_head_css(){
 				$src = $im->getAttribute('src'); 
 			}
 			$authname = get_the_author_meta('nickname');
-			$title = '<span style="background: url('.esc_url($src).');background-repeat: no-repeat;height: 64px;position: absolute;width: 100px;top: 13px;left: -70px;" class="display-name"></span><span class="display-name">'.esc_html__($authname,'accelerated-mobile-pages').'<span>';
+			$title = '<span style="background: url('.esc_url($src).');background-repeat: no-repeat;height: 64px;position: absolute;width: 100px;top: 13px;left: -70px;" class="display-name"></span><span class="display-name">'.esc_html($authname).'<span>';
 			$wp_admin_bar->add_menu( array(
 			        'id'        => 'user-info',
 			        'title'      => $title
@@ -10115,4 +10122,40 @@ function ampforwp_sanitize_svg_file( $file_path ) {
     $wp_filesystem->put_contents( $file_path, $sanitized_svg, FS_CHMOD_FILE );
 
     return $file_path;
+}
+
+add_action('wp_ajax_ampforwp_search_infinite_scroll_post','ampforwp_search_infinite_scroll_post');
+add_action('wp_ajax_nopriv_ampforwp_search_infinite_scroll_post','ampforwp_search_infinite_scroll_post');
+function ampforwp_search_infinite_scroll_post(){
+    if( isset( $_POST[ 'security' ] ) && wp_verify_nonce( $_POST[ 'security' ],'ampforwp_filtered_post_nounce') ){
+		$this_id = $_POST[ 'this_id' ];
+		$search = $_POST[ 'search' ];
+		$exclude_id[] = $this_id;
+		$args = array("post_type" => "post", "s" => $search,"post__not_in"=>$exclude_id);
+		$query = get_posts( $args );
+		$post_data = array();
+		foreach ($query as $key => $value) {
+			$post_data[] = $value; 
+		}
+		echo json_encode($post_data);
+		die;
+	}
+}
+
+add_action('wp_ajax_ampforwp_infinite_scroll_post_ajax','ampforwp_infinite_scroll_post_ajax');
+add_action('wp_ajax_nopriv_ampforwp_infinite_scroll_post_ajax','ampforwp_infinite_scroll_post_ajax');
+function ampforwp_infinite_scroll_post_ajax(){
+   // if( isset( $_POST[ 'security' ] ) && wp_verify_nonce( $_POST[ 'security' ],'ampforwp_filtered_post_nounce') ){
+		$search = $_POST[ 'q' ];
+		$exclude_id[] = $this_id;
+		$args = array("post_type" => "post", "s" => $search);
+		$query = get_posts( $args );
+		if ( $query ) :
+			foreach ($query as $value ) {
+					$return[] = array($value->ID,$value->post_title);// array( Cat ID, Cat Name )
+			}
+		endif;
+		wp_send_json( $return );
+		
+	//}
 }
